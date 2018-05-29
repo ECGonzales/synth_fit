@@ -164,11 +164,11 @@ def test_all(data_wave, data_flux, data_unc, model_dict, params,
     cbar = fig.colorbar(foo, cax=cbar_ax, ticks=labels)
     cbar.set_label(label='$log(g)$',size=18)
     #plt.savefig('/Users/paigegiorla/Desktop/Teff_goodnesses_{}'.format(shortname)+'.pdf')
-    plt.savefig('/Users/Dropbox/BDNYC/BDNYC_Research/Python/Modules/synth_fit/my_plots/Teff_goodnesses_{}'.format(shortname) + '.pdf')
+    plt.savefig('/Users/Dropbox/BDNYC/BDNYC_Research/Python/Modules/synth_fit/Run_outputs/Figures/Teff_goodnesses_{}'.format(shortname) + '.pdf')
     plt.clf()
    
         
-    fb = open('/Users/Dropbox/BDNYC/BDNYC_Research/Python/Modules/synth_fit/output/chisquares_{}'.format(shortname)+'.pkl','wb')
+    fb = open('/Users/Dropbox/BDNYC/BDNYC_Research/Python/Modules/synth_fit/Run_outputs/chisquares_{}'.format(shortname)+'.pkl','wb')
     pickle.dump(save_chisq,fb)
     fb.close()
     return best_params,min(chisq)
