@@ -5,24 +5,28 @@ import logging
 import cPickle
 import astropy.units as u
 
-import BDdb
+from astrodbkit import astrodb
 import synth_fit
 import synth_fit.bdfit
 
 logging.basicConfig(level=logging.INFO)
 
 # load the database - replace with appropriate path
-db = BDdb.get_db('/home/stephanie/Dropbox/BDNYC_new.db')
+db= astrodb.Database('/Users/eileengonzales/Dropbox/BDNYC/BDNYCdb_copy/BDNYCdevdb/bdnycdev.db')
+#db = BDdb.get_db('/home/stephanie/Dropbox/BDNYC_new.db')
 #db = BDdb.get_db('/home/stephanie/Dropbox/BDNYCdb/BDNYC.db')
 
 object_name = '0036+1821'
 
-query_spectrum = db.dict.execute(
+query_spectrum = db.query(
         "SELECT spec.wavelength_units, spec.flux_units, "
-        "spec.wavelength, spec.flux, spec.unc, spec.header FROM "
+        "spec.spectrum FROM "
         "spectra AS spec JOIN sources as s ON spec.source_id=s.id "
         "WHERE s.shortname='0036+1821' AND spec.telescope_id=7 AND "
-        "spec.instrument_id=6 AND mode_id=1").fetchone()
+        "spec.instrument_id=6 AND mode_id=1", fetch='one')
+
+# ================ This is a hot mess. This example can't be used as is since the format of the database is different
+# The stuff below this line will NOT work properly ==========================
 
 # turn into a dictionary with astropy units quantities
 wave_unit = u.Unit(query_spectrum['wavelength_units'])
