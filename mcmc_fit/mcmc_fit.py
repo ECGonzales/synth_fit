@@ -284,7 +284,7 @@ def fit_spectrum(raw_spectrum, model_grid, model_grid_name, shortname, walkers, 
     params = [i for i in model_grid.keys() if i in ['logg', 'teff', 'f_sed', 'k_zz']]
 
     # Set up the sampler object (it's a wrapper around emcee)
-    bdsamp = synth_fit.bdfit.BDSampler(run_name, spectrum, model_grid, params, smooth=False,
+    bdsamp = synth_fit.bdfit.BDSampler(shortname, spectrum, model_grid, params, smooth=False,
                                        plot_title="{}, {}".format(run_name, model_grid_name),
                                        snap=False)  # smooth = False if model already matches data,
     # snap = True if no interpolation is needed on grid
