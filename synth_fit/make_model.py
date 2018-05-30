@@ -11,7 +11,7 @@ import matplotlib
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
 
-from smooth import *
+from synth_fit.smooth import *
 
 class ModelGrid(object):
     """
