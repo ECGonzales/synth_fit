@@ -8,7 +8,7 @@ import logging
 import numpy as np
 from astropy import units as u
 import pickle
-from smooth import *
+from synth_fit.smooth import *
 import matplotlib.colors as colors
 
 from matplotlib.colors import ListedColormap
@@ -32,7 +32,7 @@ cmap = plt.get_cmap('RdPu')
 sub_cmap = LinearSegmentedColormap.from_list('trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=0.2, b=1),cmap(np.linspace(0.2, 1, 6)))
 new_cmap = discrete_cmap(6, base_cmap=sub_cmap)
 
-def calc_chisq(data_flux,data_unc,model_flux):
+def calc_chisq(data_flux, data_unc, model_flux):
     a = (data_flux-model_flux)**2
     b = (data_unc**2)
     cs=[]
@@ -47,7 +47,7 @@ def calc_chisq(data_flux,data_unc,model_flux):
 
 
 def test_all(data_wave, data_flux, data_unc, model_dict, params,
-    smooth=False,resolution=None,shortname=''):
+    smooth=False, resolution=None, shortname=''):
     """
     Calculates chi-squared for all models in a grid to determine
     the starting point for the emcee walkers (or just to find the
@@ -122,7 +122,7 @@ def test_all(data_wave, data_flux, data_unc, model_dict, params,
         #logging.debug('lengths dw {} modw {} modf {}'.format(
         #    len(data_wave),len(model_dict['wavelength']),len(mod_flux)))
         if interp:
-            mod_flux = np.interp(data_wave,model_dict['wavelength'],mod_flux)
+            mod_flux = np.interp(data_wave, model_dict['wavelength'], mod_flux)
 #         mod_flux=mod_flux*u.erg/u.AA/u.cm**2/u.s
 #        logging.debug(str(mod_flux[100:110]))
 #        logging.debug('stdev %f', np.std(mod_flux))
@@ -143,7 +143,8 @@ def test_all(data_wave, data_flux, data_unc, model_dict, params,
         mod_flux=mod_flux*ck
 
         chisq[i] = calc_chisq(data_flux, data_unc, mod_flux)
-        foo = plt.scatter(model_dict['teff'][i],chisq[i],c=model_dict['logg'][i],cmap=new_cmap,edgecolor='None',vmin=2.75,vmax=5.75)
+        foo = plt.scatter(model_dict['teff'][i], chisq[i], c=model_dict['logg'][i], cmap=new_cmap, edgecolor='None',
+                          vmin=2.75, vmax=5.75)
         params_list = []
         for p in params:
          params_list.append(model_dict[p][i])
@@ -153,23 +154,23 @@ def test_all(data_wave, data_flux, data_unc, model_dict, params,
 #    logging.debug('min_loc %d', min_loc)
     best_params = np.array([])
     for p in params:
-        best_params = np.append(best_params,model_dict[p][min_loc])
+        best_params = np.append(best_params, model_dict[p][min_loc])
         
     plt.xlabel('$T_{eff}$',fontsize='x-large')
-    plt.ylabel('Goodness of Fit',fontsize='x-large')
-    plt.annotate('{}, {}'.format(shortname,best_params),xy=(0.5,0.95),xycoords='axes fraction')
+    plt.ylabel('Goodness of Fit', fontsize='x-large')
+    plt.annotate('{}, {}'.format(shortname, best_params), xy=(0.5, 0.95), xycoords='axes fraction')
     fig = plt.gcf()
-    labels = np.arange(3.0,6.0,0.5)
+    labels = np.arange(3.0, 6.0, 0.5)
     fig.subplots_adjust(right=0.8)
     cbar_ax = fig.add_axes([0.85, 0.15, 0.03, 0.7])
     cbar = fig.colorbar(foo, cax=cbar_ax, ticks=labels)
-    cbar.set_label(label='$log(g)$',size=18)
+    cbar.set_label(label='$log(g)$', size=18)
     #plt.savefig('/Users/paigegiorla/Desktop/Teff_goodnesses_{}'.format(shortname)+'.pdf')
     plt.savefig('/Users/eileengonzales/Dropbox/BDNYC/BDNYC_Research/Python/Modules/synth_fit/Run_outputs/Figures/Teff_goodnesses_{}'.format(shortname) + '.pdf')
     plt.clf()
    
         
     fb = open('/Users/eileengonzales/Dropbox/BDNYC/BDNYC_Research/Python/Modules/synth_fit/Run_outputs/chisquares_{}'.format(shortname)+'.pkl','wb')
-    pickle.dump(save_chisq,fb)
+    pickle.dump(save_chisq, fb)
     fb.close()
-    return best_params,min(chisq)
+    return best_params, min(chisq)

@@ -210,7 +210,7 @@ def make_model_db(model_grid_name, model_atmosphere_db, model_grid=None, grid_da
 
 
 def fit_spectrum(raw_spectrum, model_grid, model_grid_name, shortname, walkers, steps, mask=[], db='', extents=None,
-                 object_name='Test', log=False, plot=True, prnt=True, generate=True, outfile=None):
+                 run_name='Test', log=False, plot=True, prnt=True, generate=True, outfile=None):
     """
     Given **raw_spectrum** as an integer id from the SPECTRUM table or a [W,F,E] list with astropy units,
     returns a marginalized distribution plot of best fit parameters from the specified **model_grid** name.
@@ -237,8 +237,8 @@ def fit_spectrum(raw_spectrum, model_grid, model_grid_name, shortname, walkers, 
         The pre-loaded BDNYCdb.astrodb.get_db() database instance to pull the spectrum from
     extents:
         Default is None. Not sure what this does.
-    object_name: str
-        Name of object
+    run_name: str
+        Name of run. Used in saving files.
     log: bool
         Default is False.Keeping track log.
     plot:bool
@@ -284,8 +284,8 @@ def fit_spectrum(raw_spectrum, model_grid, model_grid_name, shortname, walkers, 
     params = [i for i in model_grid.keys() if i in ['logg', 'teff', 'f_sed', 'k_zz']]
 
     # Set up the sampler object (it's a wrapper around emcee)
-    bdsamp = synth_fit.bdfit.BDSampler(object_name, spectrum, model_grid, params, smooth=False,
-                                       plot_title="{}, {}".format(object_name, model_grid_name),
+    bdsamp = synth_fit.bdfit.BDSampler(run_name, spectrum, model_grid, params, smooth=False,
+                                       plot_title="{}, {}".format(run_name, model_grid_name),
                                        snap=False)  # smooth = False if model already matches data,
     # snap = True if no interpolation is needed on grid
 
@@ -297,14 +297,14 @@ def fit_spectrum(raw_spectrum, model_grid, model_grid_name, shortname, walkers, 
         bdsamp.plot_triangle(extents=extents)
         fig = plt.gcf()
         fig = plt.savefig('/Users/eileengonzales/Dropbox/BDNYC/BDNYC_Research/Python/Modules/synth_fit/Run_outputs/Figures/{}_{}'
-                           .format(model_grid_name, shortname) + '_triangle.eps')
+                           .format(model_grid_name, run_name) + '_triangle.eps')
        # fig = plt.savefig('/Users/paigegiorla/Desktop/triangle.eps')
         fig = plt.clf()
 
         bdsamp.plot_chains()
         fig = plt.gcf()
         fig = plt.savefig('/Users/eileengonzales/Dropbox/BDNYC/BDNYC_Research/Python/Modules/synth_fit/Run_outputs/{}_{}'
-                           .format(model_grid_name, shortname) + '_chains.eps')
+                           .format(model_grid_name, run_name) + '_chains.eps')
 #        fig = plt.savefig('/Users/paigegiorla/Desktop/chains.eps')
         fig = plt.clf()
 
@@ -325,13 +325,13 @@ def fit_spectrum(raw_spectrum, model_grid, model_grid_name, shortname, walkers, 
 
     # Save chain and text file
     fb = open('/Users/eileengonzales/Dropbox/BDNYC/BDNYC_Research/Python/Modules/synth_fit/Run_outputs/{}_{}'
-               .format(model_grid_name, shortname) + '_bdsamp.txt', 'wb')
+               .format(model_grid_name, run_name) + '_bdsamp.txt', 'wb')
 #   fb = open('/Users/paigegiorla/Desktop/bdsamp.txt','wb')
     pickle.dump(
         [bdsamp.start_p, bdsamp.all_params, bdsamp.all_quantiles.T[1], bdsamp.best_fit_spectrum, params_with_unc], fb)
     fb.close()
     fb = open('/Users/eileengonzales/Dropbox/BDNYC/BDNYC_Research/Python/Modules/synth_fit/Run_outputs/{}_{}'
-              .format(model_grid_name, shortname) + '_chain.pkl', 'wb')
+              .format(model_grid_name, run_name) + '_chain.pkl', 'wb')
    # fb = open('/Users/paigegiorla/Desktop/chain.pkl','wb')
     pickle.dump(bdsamp.chain, fb)
     fb.close()
@@ -358,10 +358,11 @@ def fit_spectrum(raw_spectrum, model_grid, model_grid_name, shortname, walkers, 
         which_model_legend.append(num)
     fig = plt.figure()
     ax1 = fig.add_subplot(111)
+    fig.set_size_inches(10, 6.45)
     for axis in ['top', 'bottom', 'left', 'right']:  # Thicken the frame
         ax1.spines[axis].set_linewidth(1.1)
-    plt.plot(w, bdsamp.model.retrieve_model(bdsamp.all_quantiles.T[1][:-4]), color='r', label=which_model_legend)
-    plt.plot(w, f, color='#7217FF', label=shortname)
+    plt.plot(w, bdsamp.model.retrieve_model(bdsamp.all_quantiles.T[1][:-4]), color='#7217FF', label=which_model_legend)
+    plt.plot(w, f, color='k', label=shortname)
     # plt.errorbar(w, f, yerr=e, color='#7217FF', label=shortname)
     plt.legend()
     plt.xlim(min(w) - min(w) * 0.01, max(w) + max(w) * 0.01)
@@ -370,7 +371,7 @@ def fit_spectrum(raw_spectrum, model_grid, model_grid_name, shortname, walkers, 
     plt.ylabel('Normalized Flux ($F_\lambda$)', fontsize=25)
     plt.tight_layout()
     plt.savefig('/Users/eileengonzales/Dropbox/BDNYC/BDNYC_Research/Python/Modules/synth_fit/Run_outputs/Figures/{}_{}'
-               .format(model_grid_name, shortname) + '_bestfit.eps')
+               .format(model_grid_name, run_name) + '_bestfit.eps')
    # plt.savefig('/Users/paigegiorla/Desktop/bestfit.eps')
     plt.clf()
 
