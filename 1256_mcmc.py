@@ -2,6 +2,8 @@ import astropy.units as q
 import pickle
 import mcmc_fit.mcmc_fit as mc
 import numpy as np
+import time
+start_time = time.time()
 
 
 # Read in SED of 1256-0224
@@ -25,9 +27,9 @@ w, f, e = np.loadtxt(SED_path, delimiter=" ", unpack=True)
 
 # --------------------------- If you are getting grid from the Model Database ---------------------------------------
 # Testing to run from calling the database and not a pickle file
-model_atmosphere_db ='/Users/eileengonzales/Dropbox/BDNYC/BDNYCdb_copy/model_atmospheres.db'
+model_atmosphere_db = '/Users/eileengonzales/Dropbox/BDNYC/BDNYCdb_copy/model_atmospheres.db'
 mg = mc.make_model_db('bt_settl_2013', model_atmosphere_db, grid_data='spec',
-                     param_lims=[('teff', 2000, 2500, 50), ('logg', 3.5, 5.5, 0.5)], fill_holes=False, bands=[],
+                      param_lims=[('teff', 2000, 2500, 50), ('logg', 3.5, 5.5, 0.5)], fill_holes=False, bands=[],
                       rebin_models=w, use_pandas=False)
 
 # Adding units to the arrays for either way grid is generated
@@ -41,9 +43,13 @@ e = e * q.erg/q.AA/q.cm**2/q.s
 # See line 212 fo mcmc_fit for more details
 
 # test Run to see if the code is working properly
-# bdsamp = mc.fit_spectrum([w, f, e], mg, 'bt_settl_2013', '1256-0224', 1, 5, mask=[], db='', extents=None, object_name='J1256',
-#                          log=False, plot=True, prnt=True, generate=True, outfile=None)
+# bdsamp = mc.fit_spectrum([w, f, e], mg, 'bt_settl_2013', '1256-0224', 1, 5, mask=[], db='', extents=None,
+#                          object_name='J1256', log=False, plot=True, prnt=True, generate=True, outfile=None)
+
 
 # Full Run on J1256 trying 3 walkers and 100 steps to get an idea of how long the run takes.
-bdsamp = mc.fit_spectrum([w, f, e], mg, 'bt_settl_2013', '1256-0224', 2, 5, mask=[], db='', extents=None, object_name='J1256',
-                         log=False, plot=True, prnt=True, generate=True, outfile=None)
+bdsamp = mc.fit_spectrum([w, f, e], mg, 'bt_settl_2013', '1256-0224', 10, 100, mask=[], db='', extents=None,
+                         object_name='J1256', log=False, plot=True, prnt=True, generate=True, outfile=None)
+
+# determine time it takes code to run 2, walkers 5 steps 11.07 minutes.
+print "time elapsed: {:.2f}s".format(time.time() - start_time)

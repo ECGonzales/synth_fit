@@ -356,12 +356,19 @@ def fit_spectrum(raw_spectrum, model_grid, model_grid_name, shortname, walkers, 
     for i in bdsamp.all_quantiles.T[1][:-4]:
         num = float("{0:.2f}".format(i))
         which_model_legend.append(num)
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
+    for axis in ['top', 'bottom', 'left', 'right']:  # Thicken the frame
+        ax1.spines[axis].set_linewidth(1.1)
     plt.plot(w, bdsamp.model.retrieve_model(bdsamp.all_quantiles.T[1][:-4]), color='r', label=which_model_legend)
-    plt.errorbar(w, f, yerr=e, color='k', label=shortname)
+    plt.plot(w, f, color='#7217FF', label=shortname)
+    # plt.errorbar(w, f, yerr=e, color='#7217FF', label=shortname)
     plt.legend()
     plt.xlim(min(w) - min(w) * 0.01, max(w) + max(w) * 0.01)
-    plt.xlabel('Wavelength ($\mu$m)')
-    plt.ylabel('Normalized Flux')
+    ax1.tick_params(axis='both', labelsize=20, length=8, width=1.1)
+    plt.xlabel('Wavelength ($\mu$m)', fontsize=25)
+    plt.ylabel('Normalized Flux ($F_\lambda$)', fontsize=25)
+    plt.tight_layout()
     plt.savefig('/Users/eileengonzales/Dropbox/BDNYC/BDNYC_Research/Python/Modules/synth_fit/Run_outputs/Figures/{}_{}'
                .format(model_grid_name, shortname) + '_bestfit.eps')
    # plt.savefig('/Users/paigegiorla/Desktop/bestfit.eps')
