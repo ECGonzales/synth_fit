@@ -209,7 +209,7 @@ def make_model_db(model_grid_name, model_atmosphere_db, model_grid=None, grid_da
 # =====================================================================================================================
 
 
-def fit_spectrum(raw_spectrum, model_grid, model_grid_name, shortname, walkers, steps, mask=[], db='', extents=None,
+def fit_spectrum(raw_spectrum, model_grid, model_grid_name, shortname, walkers, steps, mask=[], db='', range=None,
                  run_name='Test', log=False, plot=True, prnt=True, generate=True, outfile=None):
     """
     Given **raw_spectrum** as an integer id from the SPECTRUM table or a [W,F,E] list with astropy units,
@@ -235,7 +235,7 @@ def fit_spectrum(raw_spectrum, model_grid, model_grid_name, shortname, walkers, 
         absorption bands
     db: instance
         The pre-loaded BDNYCdb.astrodb.get_db() database instance to pull the spectrum from
-    extents:
+    range (formerly extents):
         Default is None. Not sure what this does.
     run_name: str
         Name of run. Used in saving files.
@@ -294,7 +294,7 @@ def fit_spectrum(raw_spectrum, model_grid, model_grid_name, shortname, walkers, 
 
     # Plotting
     if plot:
-        bdsamp.plot_triangle(extents=extents)
+        bdsamp.plot_triangle(range=range)
         fig = plt.gcf()
         fig = plt.savefig('/Users/eileengonzales/Dropbox/BDNYC/BDNYC_Research/Python/Modules/synth_fit/Run_outputs/Figures/{}_{}'
                            .format(model_grid_name, run_name) + '_triangle.eps')
