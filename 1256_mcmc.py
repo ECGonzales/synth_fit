@@ -1,11 +1,12 @@
+from astrodbkit import astrodb
 import astropy.units as q
 import pickle
 import mcmc_fit.mcmc_fit as mc
 import numpy as np
 import time
 start_time = time.time()
-#from synth_fit.Calc_chisquare_modifiedEG import *
-from synth_fit.calc_chisq import *
+from synth_fit.Calc_chisquare_modifiedEG import *
+#from synth_fit.calc_chisq import *
 
 
 # Read in SED of 1256-0224
@@ -76,13 +77,23 @@ bdsamp2 = mc.fit_spectrum([w, f, e], mg2, 'marley_saumon', '1256-0224test', 5, 1
 # nir only 2,5 = 7.8 minutes
 print "time elapsed: {:.2f}s".format(time.time() - start_time)
 
-# Run the Chi-squared individually
-test_all(w,f,e,mg2,['teff','logg','f_sed','k_zz'],smooth=False, resolution=None, shortname='J1256-0224_tf')
+
+# ---------------------------------------------------------------------------------------------------------------------
+#  ---------------------- Run the Chi-squared individually, b/c of code issues with normalizing -----------------------
+# ---------------------------------------------------------------------------------------------------------------------
+# Entire SED
+test_all(w, f, e, mg2, ['teff', 'logg', 'f_sed', 'k_zz'], smooth=False, resolution=None, shortname='J1256-0224_prints')
 #Output:  (array([  2.40000000e+03,   4.00000000e+00,   2.00000000e+00, 0.00000000e+00]), 0.17684231505573014)
 
-test_all(w,f,e,mg,['teff','logg'],smooth=False, resolution=None, shortname='J1256-0224_tfbt')
+# (array([  2.40000000e+03,   5.50000000e+00,   2.00000000e+00,
+#          4.00000000e+00]), 1.3281324030960199e+32)
+
+test_all(w,f,e,mg,['teff','logg'],smooth=False, resolution=None, shortname='J1256-0224_regionnorm')
 # Output: (array([ 1650.,     4.]), 0.014132433189028338)
 
+# FIRE spectrum only
+test_all(wavelength, flux, err, mg2, ['teff', 'logg', 'f_sed', 'k_zz'], smooth=False, resolution=None,
+         shortname='J1256-0224_Fireonly')
 
 # -------- Function needed to plot the model ----------------
 
@@ -120,38 +131,95 @@ ma_db = astrodb.Database(model_atmosphere_db)
 ms_nocloud = ma_db.query("select wavelength, flux from marley_saumon where logg=4.0 and teff=2400 and f_sed=2 and k_zz=0", fmt='dict')
 bt_cloud = ma_db.query("select wavelength, flux from bt_settl_2013 where logg=4.0 and teff=1650", fmt='dict')
 
+# Pull out models where normalized to max flux.
+ms_norm = ma_db.query("select wavelength, flux from marley_saumon where logg=5.5 and teff=2400 and f_sed=2 and k_zz=4", fmt='dict')
+bt_norm = ma_db.query("select wavelength, flux from bt_settl_2013 where logg=5.0 and teff=2500", fmt='dict')
 
-# pull out the wavelenght and flux
+# Re-Read in SED of 1256-0224 so that there is not units
+SED_path = '../Atmospheres_paper/Data/Gaia1256-0224 (L3.5sd) SED.txt'  # Move up to Modules and into folder
+w, f, e = np.loadtxt(SED_path, delimiter=" ", unpack=True)
+
+# pull out the wavelength and flux
 flux_nc=ms_nocloud[0]['flux']
 wave_nc=ms_nocloud[0]['wavelength']
 flux_cl=bt_cloud[0]['flux']
 wave_cl=bt_cloud[0]['wavelength']
 
-# Normalize to max flux and smooth to same resolution
-norm_flnc=flux_nc/max(flux_nc)
-norm_flcl=flux_cl/max(flux_cl)
+# pull out the wavelength and flux
+flux_ms = ms_norm[0]['flux']
+wave_ms = ms_norm[0]['wavelength']
+flux_bt = bt_norm[0]['flux']
+wave_bt = bt_norm[0]['wavelength']
+
+# smooth to saem resolution
+# unc = np.ones(len(flux_nc))
+# spec = [wave_nc, flux_nc, unc]   # group it together
+# speck = rebin_spec(spec, w)
+#
+# wl_bin_nc = speck[0].value
+# fl_bin_nc = speck[1].value
+#
+# # Normalize to max flux and smooth to same resolution
+# mult1 = f * fl_bin_nc / (e ** 2)
+# bad = np.isnan(mult1)
+# mult = np.sum(mult1[~bad])
+# sq1 = fl_bin_nc * fl_bin_nc / (e ** 2)
+# mult2 = float(sum(sq1[~bad]))
+# ck = mult / mult2
+# norm_mod_flux_nc = fl_bin_nc * ck
+#
+# norm_const_1256 = f * ck
+
+
+# normalize all of the models and 1256
+norm_region_ms = np.where(np.logical_and(wave_ms >= 0.98, wave_ms <= 0.988))
+flux_ms_norm = flux_ms / np.average(flux_ms[norm_region_ms])
+norm_region_bt = np.where(np.logical_and(wave_bt >= 0.98, wave_bt <= 0.988))
+flux_bt_norm = flux_bt / np.average(flux_bt[norm_region_bt])
+norm_region_1256 = np.where(np.logical_and(w >= 0.98, w <= 0.988))
+flux_1256_norm = f / np.average(f[norm_region_1256])
 
 # create an uncertainty array for the model
-unc = np.ones(len(norm_flnc))
-unc2 = np.ones(len(norm_flcl))
+unc_ms = np.ones(len(flux_ms_norm))
+unc_bt = np.ones(len(flux_bt_norm))
 
-spec = [wave_nc,norm_flnc,unc]   # group it together
-speck = rebin_spec(spec,w)  # rebin to the same wavelength as 1256.  Is this effectively smoothing????
-spec2 = [wave_cl,norm_flcl,unc2]   # group it together
-speck2 = rebin_spec(spec2,w)
+spec_ms = [wave_ms, flux_ms_norm, unc_ms]   # group it together
+speck_ms = rebin_spec(spec_ms, w)  # rebin to the same wavelength as 1256.  Is this effectively smoothing????
+spec_bt = [wave_bt, flux_bt_norm, unc_bt]   # group it together
+speck_bt = rebin_spec(spec_bt, w)
 
 
-wl_bin_nc = speck[0].value
-fl_bin_nc = speck[1].value
-wl_bin_cl = speck2[0].value
-fl_bin_cl = speck2[1].value
+wl_bin_ms = speck_ms[0].value
+fl_bin_ms = speck_ms[1].value
+wl_bin_bt = speck_bt[0].value
+fl_bin_bt = speck_bt[1].value
 
-# Normalize SED of 1256 to peak flux
-norm_1256 = f/max(f)
 
-plt.plot(wl_bin_nc,fl_bin_nc)
-plt.plot(wl_bin_cl,fl_bin_cl)
-plt.plot(w,norm_1256)
+# Stuff from before
+# norm_flnc=flux_nc/max(flux_nc)
+# norm_flcl=flux_cl/max(flux_cl)
+#
+# # create an uncertainty array for the model
+# unc = np.ones(len(norm_flnc))
+# unc2 = np.ones(len(norm_flcl))
+#
+# spec = [wave_nc, norm_flnc, unc]   # group it together
+# speck = rebin_spec(spec, w)  # rebin to the same wavelength as 1256.  Is this effectively smoothing????
+# spec2 = [wave_cl, norm_flcl, unc2]   # group it together
+# speck2 = rebin_spec(spec2, w)
+#
+#
+# wl_bin_nc = speck[0].value
+# fl_bin_nc = speck[1].value
+# wl_bin_cl = speck2[0].value
+# fl_bin_cl = speck2[1].value
+#
+# # Normalize SED of 1256 to peak flux
+# norm_1256 = f/max(f)
+#
+# plt.plot(wl_bin_nc, fl_bin_nc)
+# plt.plot(wl_bin_cl, fl_bin_cl)
+# plt.plot(w, norm_1256)
 
 # TODO: Add legend, axis labels and all the good stuff!
 

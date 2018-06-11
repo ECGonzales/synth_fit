@@ -113,6 +113,7 @@ def test_all(data_wave, data_flux, data_unc, model_dict, params,
     num_models = len(model_dict['flux'])
 
     chisq = np.ones(num_models) * (99e15)
+    reduced_chisquared = np.ones(num_models) * (99e15)
 
     save_chisq = []
 
@@ -141,21 +142,41 @@ def test_all(data_wave, data_flux, data_unc, model_dict, params,
         #         ck = mult/square
         #         mod_flux = mod_flux*ck
         #  --------- This is where the normalization by a constant happens -------------
-        mult1 = data_flux * mod_flux / (data_unc ** 2)
-        bad = np.isnan(mult1)
-        mult = np.sum(mult1[~bad])
-        sq1 = mod_flux * mod_flux / (data_unc ** 2)
-        mult2 = float(sum(sq1[~bad]))
-        ck = mult / mult2
-        mod_flux = mod_flux * ck
+        # mult1 = data_flux * mod_flux / (data_unc ** 2)
+        # bad = np.isnan(mult1)
+        # mult = np.sum(mult1[~bad])
+        # sq1 = mod_flux * mod_flux / (data_unc ** 2)
+        # mult2 = float(sum(sq1[~bad]))
+        # ck = mult / mult2
+        # mod_flux = mod_flux * ck
+
+        # Normalize over a specific region for both the models and the data.
+        # Here I am normalizing near the peak of the Y band for J1256. (0.98-0.988)
+        # Normalize the models
+        model_wavelength = np.array(model_dict['wavelength'])
+        norm_region = np.where(np.logical_and(model_wavelength >= 0.98, model_wavelength <= 0.988))
+        mod_flux = mod_flux/np.average(mod_flux[norm_region])
+
+        # normalize the data
+        data_wave = np.array(data_wave)
+        norm_region_data = np.where(np.logical_and(data_wave >= 0.98, data_wave <= 0.988))
+        data_flux = data_flux/np.average(data_flux[norm_region_data])
+        data_unc = data_unc/np.average(data_unc[norm_region_data])
+
+        # mod_flux = mod_flux/max(mod_flux)
+        # print mod_flux
+        # data_flux = data_flux/max(data_flux)
+        # print data_flux
 
         chisq[i] = calc_chisq(data_flux, data_unc, mod_flux)
+        # reduced_chisquared[i] = chisq[i] / (len(model_wavelength)+len(data_wave)-2)
+        reduced_chisquared[i] = chisq[i] / (len(data_wave) - 6-2) # ToDO figure out what this should be.
         foo = plt.scatter(model_dict['teff'][i], chisq[i], c=model_dict['logg'][i], cmap=new_cmap, edgecolor='None',
                           vmin=2.75, vmax=5.75)
         params_list = []
         for p in params:
             params_list.append(model_dict[p][i])
-        save_chisq.append([params_list, chisq[i]])
+        save_chisq.append([params_list, chisq[i], reduced_chisquared[i]])
 
     min_loc = np.argmin(chisq)
     #    logging.debug('min_loc %d', min_loc)
@@ -169,6 +190,7 @@ def test_all(data_wave, data_flux, data_unc, model_dict, params,
     # Double {{}} to get format to work, '.2f' means 2 decimals for a float
     plt.annotate('$T_\mathrm{{eff}}$={}'.format(best_params[0], '.1f'), xy=(0.75, 0.9), xycoords='axes fraction')
     plt.annotate('log $g$={}'.format(best_params[1], '.2f'), xy=(0.75, 0.85), xycoords='axes fraction')
+    # Add or comment out for addtional parameters --- Add the for Saumon & Marley models
     plt.annotate('$f_\mathrm{{sed}}$={}'.format(best_params[2], '.2f'), xy=(0.75, 0.8), xycoords='axes fraction')
     plt.annotate('$K_\mathrm{{zz}}$={}'.format(best_params[3], '.2f'), xy=(0.75, 0.75), xycoords='axes fraction')
     fig = plt.gcf()
@@ -188,4 +210,4 @@ def test_all(data_wave, data_flux, data_unc, model_dict, params,
             shortname) + '.pkl', 'wb')
     pickle.dump(save_chisq, fb)
     fb.close()
-    return best_params, min(chisq)
+    return best_params, min(chisq), min(reduced_chisquared)
