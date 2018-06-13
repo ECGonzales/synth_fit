@@ -185,14 +185,15 @@ def test_all(data_wave, data_flux, data_unc, model_dict, params,
         best_params = np.append(best_params, model_dict[p][min_loc])
 
     plt.xlabel('$T_{eff}$', fontsize='x-large')
-    plt.ylabel('Goodness of Fit', fontsize='x-large')
+    plt.ylabel('$\chi^2$', fontsize='x-large')
     plt.annotate('{}'.format(shortname), xy=(0.75, 0.95), xycoords='axes fraction')
     # Double {{}} to get format to work, '.2f' means 2 decimals for a float
-    plt.annotate('$T_\mathrm{{eff}}$={}'.format(best_params[0], '.1f'), xy=(0.75, 0.9), xycoords='axes fraction')
+    plt.annotate('$T_\mathrm{{eff}}$={}'.format(int(best_params[0])), xy=(0.75, 0.9), xycoords='axes fraction')
     plt.annotate('log $g$={}'.format(best_params[1], '.2f'), xy=(0.75, 0.85), xycoords='axes fraction')
     # Add or comment out for addtional parameters --- Add the for Saumon & Marley models
-    plt.annotate('$f_\mathrm{{sed}}$={}'.format(best_params[2], '.2f'), xy=(0.75, 0.8), xycoords='axes fraction')
-    plt.annotate('$K_\mathrm{{zz}}$={}'.format(best_params[3], '.2f'), xy=(0.75, 0.75), xycoords='axes fraction')
+    #plt.annotate('$f_\mathrm{{sed}}$={}'.format(best_params[2], '.2f'), xy=(0.75, 0.8), xycoords='axes fraction')
+    #plt.annotate('$K_\mathrm{{zz}}$={}'.format(best_params[3], '.2f'), xy=(0.75, 0.75), xycoords='axes fraction')
+    plt.ylim([0, 1000])
     fig = plt.gcf()
     labels = np.arange(3.0, 6.0, 0.5)
     fig.subplots_adjust(right=0.8)
